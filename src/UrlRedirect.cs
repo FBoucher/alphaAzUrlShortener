@@ -13,10 +13,12 @@ namespace Cloud5mins.Function
     public class UrlRedirect
     {
         private readonly ILogger _logger;
+        private readonly ShortenerSettings _shortenerSettings;
 
-        public UrlRedirect(ILoggerFactory loggerFactory)
+        public UrlRedirect(ILoggerFactory loggerFactory, ShortenerSettings settings)
         {
             _logger = loggerFactory.CreateLogger<UrlRedirect>();
+            _shortenerSettings = settings;
         }
 
         [Function("UrlRedirect")]
@@ -27,7 +29,7 @@ namespace Cloud5mins.Function
             ExecutionContext context)
         {
             _logger.LogInformation($"-->> Trying to Url Redirect");
-            //_logger.LogInformation($"HTTP trigger function processed for Url: {shortUrl}");
+            _logger.LogInformation($"defaultRedirectUrl from Settings: {_shortenerSettings.defaultRedirectUrl}");
 
             string redirectUrl = "https://azure.com";
 

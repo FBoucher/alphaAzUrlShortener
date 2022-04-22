@@ -1,6 +1,6 @@
 namespace Cloud5mins.domain
 {
-    class ShortenerEnv
+    public class ShortenerSettings
     {
         public string defaultRedirectUrl { get; set; }
         public string customDomain { get; set; }
