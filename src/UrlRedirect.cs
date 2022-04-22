@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Cloud5mins.domain;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Cloud5mins.Function
@@ -22,29 +21,31 @@ namespace Cloud5mins.Function
         }
 
         [Function("UrlRedirect")]
-        public HttpResponseData Run(
+        public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "urlredirect/{shortUrl}")]
             HttpRequestData req,
             string shortUrl,
             ExecutionContext context)
         {
-            _logger.LogInformation($"-->> Trying to Url Redirect");
-            _logger.LogInformation($"defaultRedirectUrl from Settings: {_shortenerSettings.defaultRedirectUrl}");
-
             string redirectUrl = "https://azure.com";
+
 
             if (!String.IsNullOrWhiteSpace(shortUrl))
             {
+                redirectUrl = _shortenerSettings.defaultRedirectUrl;
 
-                StorageTableHelper stgHelper = new StorageTableHelper("UlsDataStorage");
-                //var newUrl = stgHelper.GetShortUrlEntity(tempUrl);
-                
+                StorageTableHelper stgHelper = new StorageTableHelper(_shortenerSettings.UlsDataStorage);
+
                 var tempUrl = new ShortUrlEntity(string.Empty, shortUrl);
+                var newUrl = await stgHelper.GetShortUrlEntity(tempUrl);
 
-                var newUrl = "https://frankysnotes.com";
                 if (newUrl != null)
                 {
-                    redirectUrl = WebUtility.UrlDecode(newUrl);
+                    _logger.LogInformation($"Found it: {newUrl.Url}");
+                    newUrl.Clicks++;
+                    await stgHelper.SaveClickStatsEntity(new ClickStatsEntity(newUrl.RowKey));
+                    await stgHelper.SaveShortUrlEntity(newUrl);
+                    redirectUrl = WebUtility.UrlDecode(newUrl.ActiveUrl);
                 }
             }
             else
